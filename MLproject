@@ -1,0 +1,22 @@
+name: lsampaio-credit-risk-dl
+
+entry_points:
+  main:
+    parameters:
+      epochs:       {type: int,   default: 100}
+      batch_size:   {type: int,   default: 64}
+      learning_rate:{type: float, default: 0.001}
+      dropout_rate: {type: float, default: 0.3}
+    command: "python src/train.py --epochs {epochs} --batch_size {batch_size} --learning_rate {learning_rate} --dropout_rate {dropout_rate}"
+
+  gerar_dados:
+    command: "python src/gerar_dados.py"
+
+  explicar:
+    command: "python src/explicar.py"
+
+  fairness:
+    command: "python src/fairness.py"
+
+  servir:
+    command: "python src/api.py"

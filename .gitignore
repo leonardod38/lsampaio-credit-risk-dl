@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# MLflow
+mlruns/
+mlflow.db
+mlflow-artifacts/
+
+# Data
+data/raw/
+data/*.csv
+data/*.parquet
+
+# Models
+models/*.h5
+models/*.keras
+models/*.pkl
+models/*.joblib
+
+# Reports gerados
+reports/figures/*.png
+reports/*.html
+reports/*.csv
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env vars
+.env
+*.env
