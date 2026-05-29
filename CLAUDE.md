@@ -53,10 +53,10 @@ lsampaio-credit-risk-dl/
 ## Fases e status
 | Fase | Descrição | Status |
 |------|-----------|--------|
-| 1 | Dataset 10k + Feature Engineering + SMOTE | ⏳ Pendente |
-| 2 | Rede neural TF/Keras + MLflow tracking | ⏳ Pendente |
-| 3 | SHAP — Explainable AI | ⏳ Pendente |
-| 4 | Fairness Indicators — análise de bias | ⏳ Pendente |
+| 1 | Dataset 10k + Feature Engineering + SMOTE | ✅ Concluída |
+| 2 | Rede neural TF/Keras + MLflow tracking | ✅ Concluída |
+| 3 | SHAP — Explainable AI | ✅ Concluída |
+| 4 | Fairness — análise por grupo demográfico | ✅ Concluída |
 | 5 | Model Registry + FastAPI + GitHub | ⏳ Pendente |
 
 ## Features do dataset
