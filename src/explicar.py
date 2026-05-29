@@ -77,7 +77,8 @@ def gerar_explicacoes(modelo):
 
     # 2 — Summary por classe
     for i, classe in enumerate(CLASSES):
-        shap.summary_plot(shap_values[i], X_np, feature_names=FEATURES,
+        sv_i = shap_values[i] if isinstance(shap_values, list) else shap_values[:, :, i]
+        shap.summary_plot(sv_i, X_np, feature_names=FEATURES,
                           show=False, max_display=10)
         plt.title(f"SHAP — Classe: {classe.upper()}", fontsize=12)
         path = str(FIGS_DIR / f"shap_summary_{classe}.png")
@@ -92,7 +93,7 @@ def gerar_explicacoes(modelo):
         if len(idxs) == 0:
             continue
         idx = idxs[0]
-        sv  = shap_values[i][idx]
+        sv  = shap_values[i][idx] if isinstance(shap_values, list) else shap_values[idx, :, i]
         exp = shap.Explanation(
             values=sv,
             base_values=float(explainer.expected_value[i]),
