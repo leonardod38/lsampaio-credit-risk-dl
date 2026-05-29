@@ -202,3 +202,70 @@ def treinar(epochs=100, batch_size=64, learning_rate=0.001,
                 patience_count += 1
                 if patience_count >= PATIENCE:
      
+                    print(f"  Early stopping na epoca {epoch+1}")
+                    break
+
+        # Avaliar no teste
+        modelo.load_state_dict(torch.load(
+            str(MODELS_DIR / f"{run_name}_best.pt"), weights_only=True
+        ))
+        modelo.eval()
+        with torch.no_grad():
+            logits       = modelo(X_test)
+            y_pred_proba = torch.softmax(logits, dim=1).numpy()
+            y_pred       = logits.argmax(1).numpy()
+            y_true       = y_test.numpy()
+
+        acc = float(np.mean(y_pred == y_true))
+        f1  = f1_score(y_true, y_pred, average="macro")
+        auc = roc_auc_score(
+            pd.get_dummies(pd.Series(y_true)).values,
+            y_pred_proba, multi_class="ovr", average="macro"
+        )
+
+        mlflow.log_metric("test_accuracy",  round(acc, 4))
+        mlflow.log_metric("test_f1_macro",  round(f1,  4))
+        mlflow.log_metric("test_auc_roc",   round(auc, 4))
+        mlflow.log_metric("epochs_rodadas", len(train_losses))
+        mlflow.log_metric("best_val_loss",  round(best_val_loss, 4))
+
+        path_loss = plot_loss_curves(train_losses, val_losses,
+                                     train_accs,   val_accs, run_name)
+        path_cm   = plot_confusion_matrix(y_true, y_pred, run_name)
+        mlflow.log_artifact(path_loss)
+        mlflow.log_artifact(path_cm)
+
+        report = classification_report(y_true, y_pred, target_names=CLASSES)
+        rpath  = str(FIGS_DIR / f"report_{run_name}.txt")
+        with open(rpath, "w") as f:
+            f.write(report)
+        mlflow.log_artifact(rpath)
+
+        mlflow.pytorch.log_model(modelo, name="modelo_pytorch",
+                                  registered_model_name="credit-risk-dl-pytorch")
+
+        print(f"\n{'='*50}")
+        print(f"  Accuracy:  {acc:.4f}")
+        print(f"  F1 Macro:  {f1:.4f}")
+        print(f"  AUC-ROC:   {auc:.4f}")
+        print(f"  Epocas:    {len(train_losses)}")
+        print(f"{'='*50}")
+        print(report)
+
+    return modelo
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Fase 2 — PyTorch")
+    parser.add_argument("--epochs",        type=int,   default=100)
+    parser.add_argument("--batch_size",    type=int,   default=64)
+    parser.add_argument("--learning_rate", type=float, default=0.001)
+    parser.add_argument("--dropout_rate",  type=float, default=0.3)
+    args = parser.parse_args()
+    treinar(epochs=args.epochs, batch_size=args.batch_size,
+            learning_rate=args.learning_rate, dropout_rate=args.dropout_rate)
+    print(f"\nAcesse: http://127.0.0.1:5000")
+
+
+if __name__ == "__main__":
+    main()
