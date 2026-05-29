@@ -68,6 +68,29 @@ Output: [baixo, medio, alto, critico]
 
 ---
 
+## 📸 MLflow UI — Evidências do pipeline
+
+### Experimentos e runs rastreados
+![MLflow Home](docs/screenshots/mlflow_01_home.png)
+
+### Pipeline completo — todas as fases registradas
+![Training Runs](docs/screenshots/mlflow_02_training_runs.png)
+
+### Métricas do modelo PyTorch (fase2_pytorch)
+![Run Metrics](docs/screenshots/mlflow_03_run_metrics.png)
+> `test_accuracy: 98.71%` · `AUC-ROC: 99.95%` · `F1-Macro: 98.71%` — modelo registrado como `credit-risk-dl-pytorch v1`
+
+### Matriz de confusão — classificação por classe de risco
+![Confusion Matrix](docs/screenshots/mlflow_04_confusion_matrix.png)
+
+### Curvas de treinamento e métricas finais
+![Metrics Charts](docs/screenshots/mlflow_05_metrics_charts.png)
+
+### Fairness — accuracy por grupo demográfico
+![Fairness Analysis](docs/screenshots/mlflow_06_fairness.png)
+
+---
+
 ## 🔬 Fases do projeto
 
 ### Fase 1 — Dados + Feature Engineering
