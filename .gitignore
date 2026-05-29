@@ -42,8 +42,6 @@ reports/*.csv
 .idea/
 *.swp
 
-# Memória local do projeto
-CLAUDE.md
 
 # OS
 .DS_Store
