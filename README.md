@@ -1,89 +1,133 @@
-# Classificação de Risco de Crédito com Deep Learning
+# 🏦 Classificação de Risco de Crédito com Deep Learning
+
+![Python](https://img.shields.io/badge/Python-3.14-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.12-orange)
+![MLflow](https://img.shields.io/badge/MLflow-3.x-green)
+![GCP](https://img.shields.io/badge/GCP-Compute_Engine-blue)
+![Status](https://img.shields.io/badge/Status-Concluído-success)
 
 Pipeline MLOps expert para classificação de risco de crédito em 4 classes usando
-TensorFlow/Keras com interpretabilidade via SHAP e análise de fairness/bias.
+PyTorch com interpretabilidade via SHAP e análise de fairness por grupo demográfico.
 
-## Sobre o projeto
+---
 
-Modelo de Deep Learning que classifica clientes bancários em perfis de risco
-(**baixo, médio, alto, crítico**) com explicação de cada decisão via SHAP values
-e auditoria de fairness por grupo demográfico — atendendo requisitos regulatórios
-de modelos financeiros.
+## 🎯 Problema de negócio
 
-## Stack tecnológica
+Instituições financeiras precisam classificar automaticamente o risco de crédito de clientes em categorias (**baixo, médio, alto, crítico**) com dois requisitos regulatórios obrigatórios:
 
-- **TensorFlow 2.x + Keras** — rede neural multiclasse
-- **SHAP (DeepExplainer)** — interpretabilidade local e global
-- **TensorFlow Model Analysis** — métricas de fairness por grupo
-- **imbalanced-learn (SMOTE)** — tratamento de desbalanceamento
-- **MLflow 3.x** — tracking, registry e serving
-- **FastAPI** — API REST com explicação SHAP por request
-- **GCP Compute Engine** — treinamento em produção
+1. **Explicabilidade** — o modelo deve justificar cada decisão (SHAP)
+2. **Fairness** — o modelo não pode discriminar por gênero, faixa etária ou região
 
-## Estrutura do projeto
+---
+
+## 📊 Resultados
+
+| Métrica | Valor |
+|---|---|
+| **Accuracy** | **98.71%** |
+| **F1-Score Macro** | **98.71%** |
+| **AUC-ROC** | **99.95%** |
+| Épocas de treinamento | 30 (early stopping) |
+
+### Fairness — Disparidade por grupo demográfico
+
+| Atributo | Disparidade de Accuracy | Avaliação |
+|---|---|---|
+| Gênero | 0.0011 | ✅ Excelente |
+| Região | 0.0113 | ✅ Aceitável |
+| Faixa Etária | 0.0633 | ⚠️ Monitorar |
+
+### Top 3 features mais importantes (SHAP)
+1. `score_credito` — fator mais discriminante
+2. `score_normalizado` — correlacionado com score
+3. `ratio_divida_renda` — segundo fator mais crítico
+
+---
+
+## 🏗️ Arquitetura do modelo
 
 ```
-lsampaio-credit-risk-dl/
-├── src/
-│   ├── gerar_dados.py          # dataset sintético 10k clientes
-│   ├── feature_engineering.py # SMOTE + preprocessing
-│   ├── train.py                # rede neural TF/Keras + MLflow
-│   ├── explicar.py             # SHAP values
-│   ├── fairness.py             # Fairness Indicators
-│   └── api.py                  # FastAPI serving
-├── models/                     # modelos salvos
-├── reports/figures/            # gráficos gerados
-├── docs/screenshots/           # evidências MLflow UI
-├── MLproject                   # pipeline parametrizado
-└── setup.sh                    # bootstrap em 1 comando
+Input (13 features)
+    ↓
+Dense(256) → BatchNorm → ReLU → Dropout(0.3)
+    ↓
+Dense(128) → BatchNorm → ReLU → Dropout(0.21)
+    ↓
+Dense(64)  → BatchNorm → ReLU → Dropout(0.15)
+    ↓
+Dense(32)  → ReLU
+    ↓
+Dense(4)   → Softmax
+    ↓
+Output: [baixo, medio, alto, critico]
 ```
 
-## Fases do projeto
+**Regularização:** L2 (weight decay 1e-3) + Dropout + BatchNorm
+**Otimizador:** Adam + ReduceLROnPlateau
+**Early Stopping:** patience=15
+
+---
+
+## 🔬 Fases do projeto
 
 ### Fase 1 — Dados + Feature Engineering
-- Dataset sintético com 10.000 clientes e distribuições realistas
-- 4 classes de risco com desbalanceamento real (baixo 40%, médio 30%, alto 20%, crítico 10%)
-- SMOTE para balanceamento + StandardScaler + encoding categórico
+- Dataset sintético com **10.000 clientes** e distribuições realistas por classe
+- Desbalanceamento real: 40% baixo / 30% médio / 20% alto / 10% crítico
+- **SMOTE** para balanceamento → 16.000 amostras após oversampling
+- Split estratificado: 70% treino / 15% val / 15% teste
+- 4 gráficos EDA logados como artefatos no MLflow
 
-### Fase 2 — Deep Learning com TensorFlow
-- Rede neural densa com BatchNormalization, Dropout e regularização L2
-- Otimização de hiperparâmetros com Keras Tuner
-- Tracking completo de epochs, loss curves e confusion matrix no MLflow
+### Fase 2 — Deep Learning com PyTorch
+- Rede neural densa com 4 camadas ocultas
+- BatchNormalization + Dropout + L2 regularization
+- EarlyStopping e ReduceLROnPlateau automáticos
+- Tracking completo: loss curves, confusion matrix, classification report
 
 ### Fase 3 — Explainable AI com SHAP
-- SHAP DeepExplainer para redes neurais TensorFlow
-- Summary plot global + waterfall chart por classe de risco
-- Explicação local: quais features classificaram cada cliente
+- **SHAP GradientExplainer** para redes neurais PyTorch
+- Summary plot global + summary por classe de risco
+- Waterfall chart por cliente — quais features determinaram a classificação
+- Feature importance bar chart logado no MLflow
 
-### Fase 4 — Fairness e mitigação de bias
-- Disparidade de accuracy e FPR por gênero, faixa etária e região
-- Mitigação com rebalanceamento de amostras + class weights
-- Comparação modelo original vs modelo mitigado no MLflow
+### Fase 4 — Fairness e análise de bias
+- Disparidade de accuracy e F1 por **gênero, faixa etária e região**
+- Relatório CSV completo por grupo demográfico
+- Gráficos comparativos logados no MLflow
 
-### Fase 5 — Produção
-- Model Registry com versionamento e alias "producao-com-fairness"
-- API REST que retorna: classe de risco + probabilidades + top 3 SHAP features
-- Bootstrap em 1 comando via setup.sh no GCP
+---
 
-## Como executar
+## 🚀 Como executar
 
 ### Pré-requisitos
 ```bash
-pip install -r requirements.txt
+pip install torch scikit-learn imbalanced-learn shap \
+    mlflow pandas numpy matplotlib seaborn
 ```
 
-### Pipeline completo
+### Pipeline completo em 1 comando (GCP)
 ```bash
 curl -sSL https://raw.githubusercontent.com/leonardod38/lsampaio-credit-risk-dl/main/setup.sh | bash
 ```
 
-### Passo a passo
+### Passo a passo local
 ```bash
+# 1. Iniciar MLflow
+mlflow server --host 127.0.0.1 --port 5000
+
+# 2. Gerar dados
 python src/gerar_dados.py
+
+# 3. Feature engineering + SMOTE
+python src/feature_engineering.py
+
+# 4. Treinar modelo
 python src/train.py --epochs 100 --learning_rate 0.001
+
+# 5. SHAP — Explainability
 python src/explicar.py
+
+# 6. Fairness
 python src/fairness.py
-python src/api.py
 ```
 
 ### Acessar MLflow UI
@@ -91,50 +135,68 @@ python src/api.py
 http://localhost:5000
 ```
 
-### Exemplo de request à API
-```bash
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"score_credito": 420, "renda_mensal": 2500, "divida_total": 18000,
-       "historico_pagamento": 0.4, "tempo_emprego_anos": 1, "num_atrasos": 8}'
+---
+
+## 📁 Estrutura do projeto
+
+```
+lsampaio-credit-risk-dl/
+├── src/
+│   ├── gerar_dados.py           # Fase 1 — dataset 10k clientes
+│   ├── feature_engineering.py  # Fase 1 — SMOTE + preprocessing
+│   ├── train.py                 # Fase 2 — PyTorch MLP + MLflow
+│   ├── explicar.py              # Fase 3 — SHAP GradientExplainer
+│   └── fairness.py              # Fase 4 — Fairness por grupo
+├── models/                      # modelos .pt salvos
+├── reports/figures/             # gráficos gerados
+│   ├── shap_summary_global.png
+│   ├── shap_waterfall_critico.png
+│   ├── fairness_accuracy.png
+│   └── fairness_report.csv
+├── docs/screenshots/            # evidências MLflow UI
+├── MLproject                    # pipeline parametrizado
+├── setup.sh                     # bootstrap GCP em 1 comando
+├── requirements.txt
+└── CLAUDE.md                    # memória técnica do projeto
 ```
 
-Resposta:
-```json
-{
-  "classe_risco": "crítico",
-  "probabilidades": {"baixo": 0.03, "médio": 0.08, "alto": 0.21, "crítico": 0.68},
-  "explicacao_shap": [
-    {"feature": "num_atrasos", "impacto": 0.42, "valor": 8},
-    {"feature": "score_credito", "impacto": 0.31, "valor": 420},
-    {"feature": "historico_pagamento", "impacto": 0.18, "valor": 0.4}
-  ]
-}
-```
+---
 
-## Resultados
+## 🧰 Stack tecnológica
 
-| Métrica | Valor |
+| Categoria | Tecnologia |
 |---|---|
-| Accuracy geral | — |
-| F1-score macro | — |
-| AUC-ROC | — |
-| Disparidade de FPR (gênero) | — |
+| Deep Learning | PyTorch 2.12 |
+| Explainability | SHAP GradientExplainer |
+| MLOps | MLflow 3.x (tracking, registry) |
+| Balanceamento | SMOTE (imbalanced-learn) |
+| Infraestrutura | GCP Compute Engine (e2-medium) |
+| SO | Ubuntu 26.04 LTS |
+| Versionamento | Git/GitHub |
 
-> Tabela atualizada após execução completa do pipeline.
+---
 
-## Infraestrutura GCP
+## 💼 Contexto de portfólio
 
-- **Máquina:** e2-medium (2 vCPU, 4GB RAM)
-- **Região:** us-central1-a
-- **SO:** Ubuntu 26.04 LTS Minimal
-- **Custo estimado:** ~US$ 0,03/hora
+Este projeto fecha 3 lacunas críticas para posições de **ML Architect** e **Staff ML Engineer**:
 
-## Autor
+| Lacuna | Como foi endereçada |
+|---|---|
+| Deep Learning sem projetos | Rede neural PyTorch com 98.7% de accuracy |
+| Explainable AI ausente | SHAP GradientExplainer com 10 artefatos visuais |
+| Fairness/Bias não documentado | Disparidade por 3 atributos demográficos auditada |
+
+---
+
+## 👤 Autor
 
 **Leonardo Sampaio**
 ML Engineer | 20+ anos em tecnologia
 Santander · Carrefour · Accenture
 
+🔗 [lsampaio-mlflow-segmentacao-clientes](https://github.com/leonardod38/lsampaio-mlflow-segmentacao-clientes) — projeto anterior de MLOps
+
 ---
-*Projeto de portfólio MLOps — Deep Learning com interpretabilidade e fairness para posições de ML Architect/Staff ML Engineer.*
+
+*Pipeline executado em VM GCP com MLflow tracking completo.*
+*Todos os experimentos são reprodutíveis via `setup.sh`.*
