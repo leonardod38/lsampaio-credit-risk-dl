@@ -12,6 +12,7 @@ import argparse
 import sys
 import mlflow
 import mlflow.pytorch
+from mlflow_utils import configure_mlflow
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -30,7 +31,8 @@ ROOT         = Path(__file__).resolve().parent.parent
 DATA_DIR     = ROOT / "data"
 MODELS_DIR   = ROOT / "models"
 FIGS_DIR     = ROOT / "reports" / "figures"
-TRACKING_URI = "http://127.0.0.1:5000"
+import os as _os
+TRACKING_URI = _os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
 EXPERIMENT   = "classificacao-risco-credito"
 CLASSES      = ["baixo", "medio", "alto", "critico"]
 N_CLASSES    = 4
@@ -113,8 +115,7 @@ def plot_confusion_matrix(y_true, y_pred, run_name):
 
 def treinar(epochs=100, batch_size=64, learning_rate=0.001,
             dropout_rate=0.3, run_name="fase2_pytorch"):
-    mlflow.set_tracking_uri(TRACKING_URI)
-    mlflow.set_experiment(EXPERIMENT)
+    configure_mlflow(EXPERIMENT, TRACKING_URI)
 
     X_train, y_train, X_val, y_val, X_test, y_test = carregar_dados()
     n_features = X_train.shape[1]

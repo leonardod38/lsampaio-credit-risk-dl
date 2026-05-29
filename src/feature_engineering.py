@@ -18,6 +18,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+from mlflow_utils import configure_mlflow
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
@@ -26,7 +27,8 @@ ROOT     = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 FIGS_DIR = ROOT / "reports" / "figures"
 
-TRACKING_URI = "http://127.0.0.1:5000"
+import os as _os
+TRACKING_URI = _os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
 EXPERIMENT   = "classificacao-risco-credito"
 
 FEATURES_NUMERICAS = [
@@ -117,8 +119,7 @@ def gerar_graficos_eda(df: pd.DataFrame) -> list:
 
 
 def pipeline_feature_engineering():
-    mlflow.set_tracking_uri(TRACKING_URI)
-    mlflow.set_experiment(EXPERIMENT)
+    configure_mlflow(EXPERIMENT, TRACKING_URI)
 
     path_raw = DATA_DIR / "credito_raw.csv"
     if not path_raw.exists():

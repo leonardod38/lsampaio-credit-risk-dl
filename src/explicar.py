@@ -5,11 +5,13 @@ Autor: Leonardo Sampaio
 import sys, mlflow, numpy as np, pandas as pd
 import matplotlib.pyplot as plt, shap, torch
 from pathlib import Path
+from mlflow_utils import configure_mlflow
 
 ROOT=Path(__file__).resolve().parent.parent
 DATA_DIR=ROOT/"data"; MODELS_DIR=ROOT/"models"
 FIGS_DIR=ROOT/"reports"/"figures"
-TRACKING_URI="http://127.0.0.1:5000"
+import os as _os
+TRACKING_URI=_os.environ.get("MLFLOW_TRACKING_URI","http://127.0.0.1:5000")
 EXPERIMENT="classificacao-risco-credito"
 CLASSES=["baixo","medio","alto","critico"]
 FEATURES=["score_credito","renda_mensal","divida_total","ratio_divida_renda",
@@ -25,7 +27,7 @@ def carregar_modelo():
     print(f"Modelo: {pts[-1].name}"); return m
 
 def pipeline_explicar():
-    mlflow.set_tracking_uri(TRACKING_URI); mlflow.set_experiment(EXPERIMENT)
+    configure_mlflow(EXPERIMENT, TRACKING_URI)
     modelo=carregar_modelo()
     df_tr=pd.read_csv(DATA_DIR/"credito_train.csv")
     df_te=pd.read_csv(DATA_DIR/"credito_test.csv")

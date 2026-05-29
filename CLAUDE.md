@@ -89,3 +89,12 @@ git init && git add . && git commit -m "feat: estrutura inicial do projeto"
 6. Criar src/api.py — Fase 5
 7. Criar setup.sh
 8. Criar repositório GitHub público
+
+## Atualizações recentes (2026-05-29)
+- Corrigido o ponto de falha do MLflow: scripts agora usam fallback local para `mlruns` quando o servidor remoto não está disponível.
+- Adicionado `src/mlflow_utils.py` para centralizar a configuração do tracking.
+- Validação executada com sucesso:
+  - `python src/gerar_dados.py`
+  - `python src/feature_engineering.py`
+  - `python src/train.py --epochs 1`
+- Resultado verificado: a fase 1 e a fase 2 executam corretamente sem depender de um servidor MLflow já ativo.

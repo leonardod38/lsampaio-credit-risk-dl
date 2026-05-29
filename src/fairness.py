@@ -5,12 +5,14 @@ Autor: Leonardo Sampaio
 import sys, mlflow, numpy as np, pandas as pd
 import matplotlib.pyplot as plt, torch
 from pathlib import Path
+from mlflow_utils import configure_mlflow
 from sklearn.metrics import accuracy_score, f1_score
 
 ROOT=Path(__file__).resolve().parent.parent
 DATA_DIR=ROOT/"data"; MODELS_DIR=ROOT/"models"
 FIGS_DIR=ROOT/"reports"/"figures"
-TRACKING_URI="http://127.0.0.1:5000"
+import os as _os
+TRACKING_URI=_os.environ.get("MLFLOW_TRACKING_URI","http://127.0.0.1:5000")
 EXPERIMENT="classificacao-risco-credito"
 CLASSES=["baixo","medio","alto","critico"]
 ATRIBS=["genero","faixa_etaria","regiao"]
@@ -53,7 +55,7 @@ def plot_barras(df_m,metrica,titulo,fname):
     p=str(FIGS_DIR/fname); plt.savefig(p,dpi=150,bbox_inches="tight"); plt.close(); return p
 
 def pipeline_fairness():
-    mlflow.set_tracking_uri(TRACKING_URI); mlflow.set_experiment(EXPERIMENT)
+    configure_mlflow(EXPERIMENT, TRACKING_URI)
     modelo=carregar_modelo()
     df_te=pd.read_csv(DATA_DIR/"credito_test.csv")
     X_te=torch.FloatTensor(df_te[FEATURES].values)
