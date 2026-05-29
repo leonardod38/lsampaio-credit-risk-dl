@@ -140,7 +140,7 @@ def treinar(epochs=100, batch_size=64, learning_rate=0.001,
         otimizador = optim.Adam(modelo.parameters(), lr=learning_rate,
                                 weight_decay=1e-3)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            otimizador, factor=0.5, patience=7, verbose=False
+            otimizador, factor=0.5, patience=7
         )
 
         train_losses, val_losses = [], []
