@@ -1,0 +1,13 @@
+atributo,grupo,n,accuracy,f1_macro
+genero,F,1112,0.9865,0.9868
+genero,M,1288,0.9876,0.9874
+faixa_etaria,18-25,286,0.993,0.9932
+faixa_etaria,46-60,464,0.9935,0.9938
+faixa_etaria,36-45,807,0.9839,0.9835
+faixa_etaria,26-35,800,0.9875,0.9871
+faixa_etaria,60+,43,0.9302,0.9316
+regiao,Centro-Oeste,438,0.9795,0.9802
+regiao,Sudeste,871,0.9908,0.9908
+regiao,Sul,367,0.9837,0.9824
+regiao,Norte,318,0.9874,0.9876
+regiao,Nordeste,406,0.9901,0.9903

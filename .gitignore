@@ -49,3 +49,4 @@ Thumbs.db
 # Env vars
 .env
 *.env
+models/*.pt
