@@ -1,10 +1,10 @@
 """
-explicar.py — Fase 3: Explainable AI com SHAP DeepExplainer.
+explicar.py — Fase 3: Explainable AI com SHAP GradientExplainer (PyTorch).
 
-Gera explicacoes globais e locais do modelo de Deep Learning:
-- Summary plot global (importancia das features)
+Gera explicacoes globais e locais do modelo:
+- Summary plot global
 - Waterfall chart por classe de risco
-- Force plot para clientes individuais
+- Feature importance bar chart
 - Todos os artefatos logados no MLflow
 
 Autor: Leonardo Sampaio
@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import shap
+import torch
 from pathlib import Path
-from tensorflow import keras
 
 ROOT         = Path(__file__).resolve().parent.parent
 DATA_DIR     = ROOT / "data"
@@ -25,8 +25,7 @@ MODELS_DIR   = ROOT / "models"
 FIGS_DIR     = ROOT / "reports" / "figures"
 TRACKING_URI = "http://127.0.0.1:5000"
 EXPERIMENT   = "classificacao-risco-credito"
-
-CLASSES  = ["baixo", "medio", "alto", "critico"]
+CLASSES      = ["baixo", "medio", "alto", "critico"]
 FEATURES = [
     "score_credito", "renda_mensal", "divida_total",
     "ratio_divida_renda", "historico_pagamento",
@@ -36,82 +35,78 @@ FEATURES = [
 ]
 
 
-def carregar_modelo_e_dados():
-    modelos = list(MODELS_DIR.glob("*.keras"))
-    if not modelos:
-        print("Nenhum modelo encontrado. Execute train.py primeiro.")
+def carregar_modelo_pytorch():
+    from train import CreditRiskNet
+    pts = list(MODELS_DIR.glob("*.pt"))
+    if not pts:
+        print("Nenhum modelo .pt encontrado. Execute train.py primeiro.")
         sys.exit(1)
-    modelo_path = sorted(modelos)[-1]
-    print(f"Carregando modelo: {modelo_path.name}")
-    modelo = keras.models.load_model(str(modelo_path))
-
-    df_train = pd.read_csv(DATA_DIR / "credito_train.csv")
-    df_test  = pd.read_csv(DATA_DIR / "credito_test.csv")
-    X_train  = df_train[FEATURES].values
-    X_test   = df_test[FEATURES].values
-    y_test   = df_test["label"].values
-    return modelo, X_train, X_test, y_test
+    pt_path = sorted(pts)[-1]
+    print(f"Carregando: {pt_path.name}")
+    n_feat = len(FEATURES)
+    modelo = CreditRiskNet(n_feat)
+    modelo.load_state_dict(torch.load(str(pt_path), weights_only=True))
+    modelo.eval()
+    return modelo
 
 
-def gerar_shap_explicacoes(modelo, X_train, X_test):
+def gerar_explicacoes(modelo):
     FIGS_DIR.mkdir(parents=True, exist_ok=True)
     artefatos = []
 
-    print("Calculando SHAP values (DeepExplainer)...")
-    background = X_train[np.random.choice(X_train.shape[0], 200, replace=False)]
-    explainer  = shap.DeepExplainer(modelo, background)
-    shap_values = explainer.shap_values(X_test[:500])
+    df_train = pd.read_csv(DATA_DIR / "credito_train.csv")
+    df_test  = pd.read_csv(DATA_DIR / "credito_test.csv")
+    X_train  = torch.FloatTensor(df_train[FEATURES].values)
+    X_test   = torch.FloatTensor(df_test[FEATURES].values[:500])
 
-    # 1 — Summary plot global (todas as classes)
-    shap.summary_plot(
-        shap_values, X_test[:500],
-        feature_names=FEATURES,
-        class_names=CLASSES,
-        show=False, max_display=13
-    )
+    print("Calculando SHAP values (GradientExplainer)...")
+    bg_idx   = np.random.choice(len(X_train), 200, replace=False)
+    background = X_train[bg_idx]
+    explainer  = shap.GradientExplainer(modelo, background)
+    shap_values = explainer.shap_values(X_test)
+
+    X_np = X_test.numpy()
+
+    # 1 — Summary plot global
+    shap.summary_plot(shap_values, X_np, feature_names=FEATURES,
+                      class_names=CLASSES, show=False, max_display=13)
     path = str(FIGS_DIR / "shap_summary_global.png")
-    plt.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close()
+    plt.savefig(path, dpi=150, bbox_inches="tight"); plt.close()
     artefatos.append(path)
-    print("  Summary plot global gerado.")
+    print("  Summary global gerado.")
 
-    # 2 — Summary plot por classe de risco
+    # 2 — Summary por classe
     for i, classe in enumerate(CLASSES):
-        shap.summary_plot(
-            shap_values[i], X_test[:500],
-            feature_names=FEATURES,
-            show=False, max_display=10
-        )
+        shap.summary_plot(shap_values[i], X_np, feature_names=FEATURES,
+                          show=False, max_display=10)
         plt.title(f"SHAP — Classe: {classe.upper()}", fontsize=12)
         path = str(FIGS_DIR / f"shap_summary_{classe}.png")
-        plt.savefig(path, dpi=150, bbox_inches="tight")
-        plt.close()
+        plt.savefig(path, dpi=150, bbox_inches="tight"); plt.close()
         artefatos.append(path)
-    print("  Summary plots por classe gerados.")
+    print("  Summary por classe gerados.")
 
-    # 3 — Waterfall chart: 1 cliente por classe de risco
-    df_test_full = pd.read_csv(DATA_DIR / "credito_test.csv")
+    # 3 — Waterfall por classe
+    y_test = pd.read_csv(DATA_DIR / "credito_test.csv")["label"].values[:500]
     for i, classe in enumerate(CLASSES):
-        indices_classe = np.where(df_test_full["label"].values[:500] == i)[0]
-        if len(indices_classe) == 0:
+        idxs = np.where(y_test == i)[0]
+        if len(idxs) == 0:
             continue
-        idx = indices_classe[0]
-        shap_vals = shap_values[i][idx]
-        explanation = shap.Explanation(
-            values=shap_vals,
-            base_values=explainer.expected_value[i],
-            data=X_test[idx],
+        idx = idxs[0]
+        sv  = shap_values[i][idx]
+        exp = shap.Explanation(
+            values=sv,
+            base_values=float(explainer.expected_value[i]),
+            data=X_np[idx],
             feature_names=FEATURES
         )
-        shap.plots.waterfall(explanation, show=False, max_display=10)
-        plt.title(f"Explicacao SHAP — Cliente Risco {classe.upper()}", fontsize=11)
+        shap.plots.waterfall(exp, show=False, max_display=10)
+        plt.title(f"Waterfall — Risco {classe.upper()}", fontsize=11)
         path = str(FIGS_DIR / f"shap_waterfall_{classe}.png")
-        plt.savefig(path, dpi=150, bbox_inches="tight")
-        plt.close()
+        plt.savefig(path, dpi=150, bbox_inches="tight"); plt.close()
         artefatos.append(path)
     print("  Waterfall charts gerados.")
 
-    # 4 — Feature importance media (bar chart)
+    # 4 — Feature importance bar chart
     mean_shap = np.mean([np.abs(sv).mean(0) for sv in shap_values], axis=0)
     importancia = pd.Series(mean_shap, index=FEATURES).sort_values(ascending=True)
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -123,48 +118,40 @@ def gerar_shap_explicacoes(modelo, X_train, X_test):
     ax.spines[["top", "right"]].set_visible(False)
     plt.tight_layout()
     path = str(FIGS_DIR / "shap_feature_importance.png")
-    plt.savefig(path, dpi=150)
-    plt.close()
+    plt.savefig(path, dpi=150); plt.close()
     artefatos.append(path)
-    print("  Feature importance chart gerado.")
+    print("  Feature importance gerado.")
 
-    return artefatos, shap_values, explainer
+    return artefatos, shap_values
 
 
 def pipeline_explicar():
     mlflow.set_tracking_uri(TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT)
+    modelo = carregar_modelo_pytorch()
 
-    modelo, X_train, X_test, y_test = carregar_modelo_e_dados()
+    with mlflow.start_run(run_name="fase3_shap_xai"):
+        mlflow.log_param("metodo_xai",   "SHAP GradientExplainer")
+        mlflow.log_param("framework",    "PyTorch")
+        mlflow.log_param("n_background", 200)
+        mlflow.log_param("n_explicados", 500)
 
-    with mlflow.start_run(run_name="fase3_shap_explicabilidade"):
-        mlflow.log_param("metodo_xai",     "SHAP DeepExplainer")
-        mlflow.log_param("n_background",   200)
-        mlflow.log_param("n_explicados",   500)
-        mlflow.log_param("n_classes",      4)
+        artefatos, shap_values = gerar_explicacoes(modelo)
 
-        artefatos, shap_values, explainer = gerar_shap_explicacoes(
-            modelo, X_train, X_test
-        )
-
-        # Logar importancia das features como metricas
         mean_shap = np.mean([np.abs(sv).mean(0) for sv in shap_values], axis=0)
         for feat, val in zip(FEATURES, mean_shap):
             mlflow.log_metric(f"shap_{feat}", round(float(val), 6))
 
-        # Top 3 features mais importantes
         top3 = pd.Series(mean_shap, index=FEATURES).nlargest(3)
         mlflow.log_param("top1_feature", top3.index[0])
         mlflow.log_param("top2_feature", top3.index[1])
         mlflow.log_param("top3_feature", top3.index[2])
 
-        # Logar todos os artefatos
         for artefato in artefatos:
             mlflow.log_artifact(artefato)
 
-        print(f"\nFase 3 concluida!")
-        print(f"  Artefatos SHAP: {len(artefatos)}")
-        print(f"  Top 3 features: {list(top3.index)}")
+        print(f"\nFase 3 concluida! Artefatos: {len(artefatos)}")
+        print(f"Top 3 features: {list(top3.index)}")
         print(f"\nAcesse: http://127.0.0.1:5000")
 
 
