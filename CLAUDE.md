@@ -98,3 +98,12 @@ git init && git add . && git commit -m "feat: estrutura inicial do projeto"
   - `python src/feature_engineering.py`
   - `python src/train.py --epochs 1`
 - Resultado verificado: a fase 1 e a fase 2 executam corretamente sem depender de um servidor MLflow já ativo.
+
+## Fluxo operacional do projeto
+1. Bootstrap do ambiente e dependências via `setup.sh` / `MLproject`.
+2. Geração do dataset sintético com 10 mil clientes em `src/gerar_dados.py`.
+3. Feature engineering, SMOTE e split treino/val/test em `src/feature_engineering.py`.
+4. Treinamento do modelo PyTorch com tracking no MLflow em `src/train.py`.
+5. Geração de explicabilidade via SHAP em `src/explicar.py`.
+6. Avaliação de fairness por grupo demográfico em `src/fairness.py`.
+7. Armazenamento de artefatos e evidências em `reports/figures/` e `docs/screenshots/`.
