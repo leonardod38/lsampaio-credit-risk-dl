@@ -93,6 +93,29 @@ Output: [baixo, medio, alto, critico]
 
 ## 🔬 Fases do projeto
 
+### Fluxo operacional do projeto
+
+```mermaid
+flowchart LR
+    A[setup.sh / MLproject] --> B[src/gerar_dados.py]
+    B --> C[src/feature_engineering.py]
+    C --> D[src/train.py]
+    D --> E[src/explicar.py]
+    D --> F[src/fairness.py]
+    E --> G[reports/figures + docs/screenshots]
+    F --> G
+    G --> H[MLflow + GitHub]
+```
+
+1. Bootstrap do ambiente e dependências.
+2. Geração do dataset sintético com 10 mil clientes.
+3. Feature engineering, SMOTE e split treino/val/test.
+4. Treinamento do modelo PyTorch com MLflow tracking.
+5. Geração de explicabilidade com SHAP.
+6. Avaliação de fairness por grupo demográfico.
+7. Armazenamento dos artefatos e evidências para apresentação.
+
+
 ### Fase 1 — Dados + Feature Engineering
 - Dataset sintético com **10.000 clientes** e distribuições realistas por classe
 - Desbalanceamento real: 40% baixo / 30% médio / 20% alto / 10% crítico
