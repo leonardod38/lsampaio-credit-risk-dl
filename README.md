@@ -70,24 +70,30 @@ Output: [baixo, medio, alto, critico]
 
 ## 📸 MLflow UI — Evidências do pipeline
 
-### Experimentos e runs rastreados
-![MLflow Home](docs/screenshots/mlflow_01_home.png)
+### Distribuição das classes de risco (Fase 1)
+![Distribuição](docs/screenshots/mlflow_fase1_distribuicao.png)
 
-### Pipeline completo — todas as fases registradas
-![Training Runs](docs/screenshots/mlflow_02_training_runs.png)
+### Heatmap de correlação entre features (Fase 1)
+![Heatmap](docs/screenshots/mlflow_fase1_heatmap.png)
 
-### Métricas do modelo PyTorch (fase2_pytorch)
-![Run Metrics](docs/screenshots/mlflow_03_run_metrics.png)
-> `test_accuracy: 98.71%` · `AUC-ROC: 99.95%` · `F1-Macro: 98.71%` — modelo registrado como `credit-risk-dl-pytorch v1`
-
-### Matriz de confusão — classificação por classe de risco
+### Matriz de confusão — classificação por classe de risco (Fase 2)
 ![Confusion Matrix](docs/screenshots/mlflow_04_confusion_matrix.png)
+> `test_accuracy: 98.71%` · `AUC-ROC: 99.95%` · `F1-Macro: 98.71%` — modelo registrado como `credit-risk-dl-pytorch v2`
 
-### Curvas de treinamento e métricas finais
-![Metrics Charts](docs/screenshots/mlflow_05_metrics_charts.png)
+### Curvas de treinamento (Fase 2)
+![Loss Curves](docs/screenshots/mlflow_05_loss_curves.png)
 
-### Fairness — accuracy por grupo demográfico
-![Fairness Analysis](docs/screenshots/mlflow_06_fairness.png)
+### SHAP — Summary global das features (Fase 3)
+![SHAP Global](docs/screenshots/mlflow_05_shap_global.png)
+
+### SHAP — Importância das features (Fase 3)
+![SHAP Importance](docs/screenshots/mlflow_05_shap_importance.png)
+
+### Fairness — Accuracy por grupo demográfico (Fase 4)
+![Fairness Accuracy](docs/screenshots/mlflow_06_fairness_accuracy.png)
+
+### Fairness — F1-Score por grupo demográfico (Fase 4)
+![Fairness F1](docs/screenshots/mlflow_06_fairness_f1.png)
 
 ---
 
