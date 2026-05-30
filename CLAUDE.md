@@ -9,9 +9,9 @@
 
 ## Stack
 - Python 3.11 (local) / Python 3.14 (GCP)
-- TensorFlow 2.x + Keras
-- SHAP (DeepExplainer)
-- TensorFlow Model Analysis + Fairness Indicators
+- PyTorch 2.12 (CPU)
+- SHAP (GradientExplainer)
+- Análise de fairness por grupo demográfico (gênero, faixa etária, região)
 - MLflow (tracking, registry, serving)
 - FastAPI (API REST)
 - imbalanced-learn (SMOTE)
@@ -54,7 +54,7 @@ lsampaio-credit-risk-dl/
 | Fase | Descrição | Status |
 |------|-----------|--------|
 | 1 | Dataset 10k + Feature Engineering + SMOTE | ✅ Concluída |
-| 2 | Rede neural TF/Keras + MLflow tracking | ✅ Concluída |
+| 2 | Rede neural PyTorch + MLflow tracking | ✅ Concluída |
 | 3 | SHAP — Explainable AI | ✅ Concluída |
 | 4 | Fairness — análise por grupo demográfico | ✅ Concluída |
 | 5 | Model Registry + FastAPI + GitHub | ⏳ Pendente |
@@ -83,7 +83,7 @@ git init && git add . && git commit -m "feat: estrutura inicial do projeto"
 ## Próximos passos
 1. Criar src/gerar_dados.py — Fase 1
 2. Criar src/feature_engineering.py — Fase 1
-3. Criar src/train.py — Fase 2
+3. Criar src/train.py — Fase 2 (rede neural PyTorch)
 4. Criar src/explicar.py — Fase 3
 5. Criar src/fairness.py — Fase 4
 6. Criar src/api.py — Fase 5
